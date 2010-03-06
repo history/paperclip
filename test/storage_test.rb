@@ -106,7 +106,8 @@ class StorageTest < Test::Unit::TestCase
                       :development  => { :bucket => "dev_bucket" }
                     },
                     :s3_host_alias => "something.something.com",
-                    :path => ":attachment/:basename.:extension",
+                    :styles => { :thumb => "100x100", :square => "32x32#" },
+                    :path => ":attachment/:style/:basename.:extension",
                     :url => ":s3_alias_url"
                     
       rails_env("production")
@@ -114,9 +115,11 @@ class StorageTest < Test::Unit::TestCase
       @dummy = Dummy.new
       @dummy.avatar = StringIO.new(".")
       
-      AWS::S3::S3Object.expects(:url_for).with("avatars/stringio.txt", "prod_bucket", { :expires_in => 3600 })
-      
+      AWS::S3::S3Object.expects(:url_for).with("avatars/original/stringio.txt", "prod_bucket", { :expires_in => 3600 })
       @dummy.avatar.expiring_url
+
+      AWS::S3::S3Object.expects(:url_for).with("avatars/thumb/stringio.txt", "prod_bucket", { :expires_in => 1800 })
+      @dummy.avatar.expiring_url(:thumb, 1800)
     end
     
     should "should succeed" do
